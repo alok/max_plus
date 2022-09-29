@@ -7,11 +7,12 @@ mod min_plus;
 mod tests {
     use crate::{max_plus::MaxPlus, min_plus::MinPlus};
     #[test]
-    fn test_basic_ops() {
-        let (a, b) = (MaxPlus(3), MaxPlus(5));
-        let (sum, product) = (a + b, a * b);
-        assert_eq!(sum, MaxPlus(5));
-        assert_eq!(product, MaxPlus(8));
+    fn test_max_plus_ops() {
+        let (a, b) = (3, 5);
+        let sum = MaxPlus::add(a, b);
+        let product = MaxPlus::mul(a, b);
+        assert_eq!(sum, 5);
+        assert_eq!(product, 8);
     }
     fn a() {
         let (a, b) = (MinPlus(3), MinPlus(5));

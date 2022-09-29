@@ -1,57 +1,59 @@
-use {
-    core::ops::Neg,
-    derive_more::{Display, From},
-    num::{
-        self,
-        traits::{Bounded, One, Zero},
-    },
-    std::{
-        cmp::{max, Ord},
-        ops::{Add, Div, Mul, Sub},
-    },
-};
+use core:: ops::Neg;
+use num::traits::{Bounded, Zero};
+use std::ops::{Add, Sub};
+use std::cmp::Ord;
 
-#[derive(Clone, Copy, Debug, Display, Eq, From, Ord, PartialEq, PartialOrd)]
-pub(crate) struct MaxPlus<T>(pub(crate) T);
+pub trait MaxPlus {
+    type Output;
 
-impl<T: Ord> Add for MaxPlus<T> {
-    type Output = Self;
+    fn add(self, rhs: Self) -> Self::Output;
 
-    fn add(self, rhs: Self) -> Self::Output { Self(max(self.0, rhs.0)) }
+    fn mul(self, rhs: Self) -> Self::Output;
+
+    fn zero() -> Self;
+
+    fn is_zero(&self) -> bool;
+
+    fn min_value() -> Self;
+
+    fn max_value() -> Self;
+
+    fn neg(self) -> Self::Output;
+
+    fn div(self, rhs: Self) -> Self::Output;
 }
 
-impl<T: Add + Add<Output = T>> Mul for MaxPlus<T> {
-    type Output = Self;
+impl<T> MaxPlus for T
+where
+T:Ord
+    + Add
+    + Add<Output = T>
+    + Zero
+    + Bounded
+    + Eq
+    + Neg
+    + Neg<Output = T>
+    + Sub
+    + Sub<Output = T>
+{
+    type Output = T;
 
-    fn mul(self, rhs: Self) -> Self::Output { Self(self.0 + rhs.0) }
-}
+    fn add(self, rhs: T) -> T { self.max(rhs) }
 
-impl<T: Zero + Bounded + Ord> Zero for MaxPlus<T> {
-    fn zero() -> Self { MaxPlus(Bounded::min_value()) }
+    fn mul(self, rhs: T) -> T { self + rhs }
 
-    fn is_zero(&self) -> bool { self.0 == Bounded::min_value() }
-}
+    fn zero() -> T { Bounded::min_value() }
 
-impl<T: Zero + Eq> One for MaxPlus<T> {
-    fn one() -> Self { MaxPlus(Zero::zero()) }
+    fn is_zero(&self) -> bool {
+        let zero: T = Zero::zero();
+        self == &zero
+    }
 
-    fn is_one(&self) -> bool { self.0 == Zero::zero() }
-}
+    fn min_value() -> T { Bounded::min_value() }
 
-impl<T: Bounded> Bounded for MaxPlus<T> {
-    fn min_value() -> Self { MaxPlus(Bounded::min_value()) }
+    fn max_value() -> T { Bounded::max_value() }
 
-    fn max_value() -> Self { MaxPlus(Bounded::max_value()) }
-}
+    fn neg(self) -> T { -self }
 
-impl<T: Neg + Neg<Output = T>> Neg for MaxPlus<T> {
-    type Output = Self;
-
-    fn neg(self) -> Self::Output { Self(-self.0) }
-}
-
-impl<T: Sub + Sub<Output = T>> Div for MaxPlus<T> {
-    type Output = Self;
-
-    fn div(self, rhs: Self) -> Self::Output { Self(self.0 - rhs.0) }
+    fn div(self, rhs: T) -> T { self - rhs }
 }
