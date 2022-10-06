@@ -1,57 +1,60 @@
 use {
-    core::ops::Neg,
-    derive_more::{Display, From},
-    num::{
-        self,
-        traits::{Bounded, One, Zero},
-    },
+    num::traits::{Bounded, Zero},
     std::{
-        cmp::{max, Ord},
-        ops::{Add, Div, Mul, Sub},
+        cmp::Ord,
+        ops::{Add, Sub},
     },
 };
 
-#[derive(Clone, Copy, Debug, Display, Eq, From, Ord, PartialEq, PartialOrd)]
-pub(crate) struct MaxPlus<T>(pub(crate) T);
+pub trait MaxPlus {
+    type Output;
 
-impl<T: Ord> Add for MaxPlus<T> {
-    type Output = Self;
+    fn add(self, rhs: Self) -> Self::Output;
 
-    fn add(self, rhs: Self) -> Self::Output { Self(max(self.0, rhs.0)) }
+    fn mul(self, rhs: Self) -> Self::Output;
+
+    fn zero() -> Self;
+
+    fn is_zero(&self) -> bool;
+
+    fn min_value() -> Self;
+
+    fn max_value() -> Self;
+
+    fn div(self, rhs: Self) -> Self::Output;
 }
 
-impl<T: Add + Add<Output = T>> Mul for MaxPlus<T> {
-    type Output = Self;
+impl<T> MaxPlus for T
+where T: Ord
+        + Add<Output = T>
+        + Zero
+        + Bounded
+        + Eq
+        + Sub<Output = T>
+{
+    type Output = T;
 
-    fn mul(self, rhs: Self) -> Self::Output { Self(self.0 + rhs.0) }
+    fn add(self, rhs: T) -> Self::Output { self.max(rhs) }
+
+    fn mul(self, rhs: T) -> Self::Output { self + rhs }
+
+    fn zero() -> Self::Output { Bounded::min_value() }
+
+    fn is_zero(&self) -> bool {
+        self == &Zero::zero()
+    }
+
+    fn min_value() -> Self { Bounded::min_value() }
+
+    fn max_value() -> Self { Bounded::max_value() }
+
+    fn div(self, rhs: T) -> Self::Output { self - rhs }
 }
 
-impl<T: Zero + Bounded + Ord> Zero for MaxPlus<T> {
-    fn zero() -> Self { MaxPlus(Bounded::min_value()) }
-
-    fn is_zero(&self) -> bool { self.0 == Bounded::min_value() }
-}
-
-impl<T: Zero + Eq> One for MaxPlus<T> {
-    fn one() -> Self { MaxPlus(Zero::zero()) }
-
-    fn is_one(&self) -> bool { self.0 == Zero::zero() }
-}
-
-impl<T: Bounded> Bounded for MaxPlus<T> {
-    fn min_value() -> Self { MaxPlus(Bounded::min_value()) }
-
-    fn max_value() -> Self { MaxPlus(Bounded::max_value()) }
-}
-
-impl<T: Neg + Neg<Output = T>> Neg for MaxPlus<T> {
-    type Output = Self;
-
-    fn neg(self) -> Self::Output { Self(-self.0) }
-}
-
-impl<T: Sub + Sub<Output = T>> Div for MaxPlus<T> {
-    type Output = Self;
-
-    fn div(self, rhs: Self) -> Self::Output { Self(self.0 - rhs.0) }
-}
+// // TODO 
+// #[test]
+// fn test_f64() {
+//     let a = 1.0;
+//     let b = MaxPlus::add(f64::INFINITY, a);
+//     println!("{b}");
+// }
